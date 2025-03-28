@@ -2,7 +2,6 @@
 import React from 'react';
 import AppHeader from '../components/AppHeader';
 import BillUpload from '../components/BillUpload';
-import BillDisplay from '../components/BillDisplay';
 import FriendsList from '../components/FriendsList';
 import ItemList from '../components/ItemList';
 import Summary from '../components/Summary';
@@ -38,7 +37,7 @@ const StepIndicator: React.FC = () => {
             
             {index < steps.length - 1 && (
               <div className={`step-indicator-line ${
-                state.currentStep > step.number ? 'bg-primary' : 'bg-gray-200'
+                state.currentStep > step.number ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'
               }`} />
             )}
           </React.Fragment>
@@ -67,7 +66,7 @@ const BillSplitterContent: React.FC = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gray-50 pb-10">
+    <div className="min-h-screen bg-background pb-10">
       <AppHeader />
       
       {state.processedBill && <StepIndicator />}
