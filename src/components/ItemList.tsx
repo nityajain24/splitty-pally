@@ -2,11 +2,12 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check, DollarSign, ArrowLeft, ArrowRight, ListChecks, CircleCheck } from 'lucide-react';
+import { Check, DollarSign, ArrowLeft, ArrowRight, ListChecks, CircleCheck, Users } from 'lucide-react';
 import { useBill } from '../context/BillContext';
 import { areAllItemsAssigned, getAssignmentPercentage, getUnassignedItemsTotal } from '../utils/billCalculator';
 import { useToast } from '@/components/ui/use-toast';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 
 const ItemList: React.FC = () => {
   const { state, dispatch } = useBill();
@@ -18,30 +19,39 @@ const ItemList: React.FC = () => {
   const assignmentProgress = getAssignmentPercentage(state.items);
   const unassignedTotal = getUnassignedItemsTotal(state.items);
   
+  const isItemAssignedToCurrentFriend = (item: { assignedTo: string[] | string | null }) => {
+    if (!item.assignedTo) return false;
+    if (Array.isArray(item.assignedTo)) {
+      return item.assignedTo.includes(currentFriend.id);
+    }
+    return item.assignedTo === currentFriend.id;
+  };
+  
+  const isItemShared = (item: { assignedTo: string[] | string | null }) => {
+    return item.assignedTo && Array.isArray(item.assignedTo) && item.assignedTo.length > 1;
+  };
+  
+  const getItemShareCount = (item: { assignedTo: string[] | string | null }) => {
+    if (!item.assignedTo) return 0;
+    return Array.isArray(item.assignedTo) ? item.assignedTo.length : 1;
+  };
+  
   const handleToggleItem = (itemId: string) => {
     const item = state.items.find(item => item.id === itemId);
     
     if (!item) return;
     
-    if (item.assignedTo === currentFriend.id) {
-      // If already assigned to current friend, unassign it
+    if (isItemAssignedToCurrentFriend(item)) {
+      // If already assigned to current friend, unassign only from this friend
       dispatch({
         type: "UNASSIGN_ITEM",
-        payload: { itemId }
-      });
-    } else if (item.assignedTo === null) {
-      // If unassigned, assign to current friend
-      dispatch({
-        type: "ASSIGN_ITEM",
         payload: { itemId, friendId: currentFriend.id }
       });
     } else {
-      // If assigned to someone else, show a toast and don't change
-      const assignedFriend = state.friends.find(f => f.id === item.assignedTo);
-      toast({
-        title: "Item already assigned",
-        description: `This item is already assigned to ${assignedFriend?.name}`,
-        variant: "destructive",
+      // If not assigned to current friend, assign it
+      dispatch({
+        type: "ASSIGN_ITEM",
+        payload: { itemId, friendId: currentFriend.id }
       });
     }
   };
@@ -54,17 +64,24 @@ const ItemList: React.FC = () => {
     dispatch({ type: "NEXT_FRIEND" });
     
     if (isLastFriend) {
-      // If all items are assigned or this is the last friend, proceed to summary
-      if (areAllItemsAssigned(state.items) || isLastFriend) {
-        dispatch({ type: "CALCULATE_TOTALS" });
-        dispatch({ type: "SET_STEP", payload: 4 });
-      }
+      // If this is the last friend, proceed to summary
+      dispatch({ type: "CALCULATE_TOTALS" });
+      dispatch({ type: "SET_STEP", payload: 4 });
     }
   };
   
   const handleFinishAssignment = () => {
     dispatch({ type: "CALCULATE_TOTALS" });
     dispatch({ type: "SET_STEP", payload: 4 });
+  };
+  
+  const getSharedWithNames = (item: any) => {
+    if (!item.assignedTo || !Array.isArray(item.assignedTo)) return "";
+    
+    return state.friends
+      .filter(f => item.assignedTo.includes(f.id) && f.id !== currentFriend.id)
+      .map(f => f.name)
+      .join(", ");
   };
   
   return (
@@ -86,7 +103,10 @@ const ItemList: React.FC = () => {
           </div>
           <CardDescription>
             {currentFriend ? (
-              <>What did <span className="font-medium">{currentFriend.name}</span> have?</>
+              <>
+                What did <span className="font-medium">{currentFriend.name}</span> have?
+                <p className="mt-1 text-xs">Items can be shared between multiple people.</p>
+              </>
             ) : (
               "Select items for each friend"
             )}
@@ -97,7 +117,7 @@ const ItemList: React.FC = () => {
             <div>
               <p className="text-sm font-medium">Remaining unassigned</p>
               <p className="text-xs text-gray-500">
-                {state.items.filter(i => i.assignedTo === null).length} items
+                {state.items.filter(i => !i.assignedTo).length} items
               </p>
             </div>
             <p className="text-lg font-bold">${unassignedTotal.toFixed(2)}</p>
@@ -105,15 +125,17 @@ const ItemList: React.FC = () => {
           
           <div className="space-y-2">
             {state.items.map((item) => {
-              const isAssignedToCurrentFriend = item.assignedTo === currentFriend?.id;
-              const isAssignedToOther = item.assignedTo !== null && item.assignedTo !== currentFriend?.id;
+              const isAssignedToCurrentFriend = isItemAssignedToCurrentFriend(item);
+              const isShared = isItemShared(item);
+              const shareCount = getItemShareCount(item);
+              const sharedWithNames = getSharedWithNames(item);
               
               return (
                 <div 
                   key={item.id}
                   className={`bill-item cursor-pointer ${
                     isAssignedToCurrentFriend ? 'selected border-primary bg-primary/10' : 
-                    isAssignedToOther ? 'opacity-50' : ''
+                    item.assignedTo ? 'border-gray-300' : ''
                   }`}
                   onClick={() => handleToggleItem(item.id)}
                 >
@@ -125,16 +147,38 @@ const ItemList: React.FC = () => {
                         {isAssignedToCurrentFriend && <Check className="h-3 w-3" />}
                       </div>
                       <span>{item.name}</span>
+                      
+                      {isShared && (
+                        <Badge variant="outline" className="flex gap-1 items-center text-xs">
+                          <Users className="h-3 w-3" />
+                          Shared ({shareCount})
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex items-center gap-1">
                       <DollarSign className="h-4 w-4 text-gray-400" />
-                      <span className="font-medium">{item.price.toFixed(2)}</span>
+                      <span className="font-medium">
+                        {isShared ? 
+                          `${(item.price / shareCount).toFixed(2)} of ${item.price.toFixed(2)}` : 
+                          item.price.toFixed(2)
+                        }
+                      </span>
                     </div>
                   </div>
                   
-                  {isAssignedToOther && (
+                  {isShared && (
                     <div className="text-xs text-gray-500 mt-1 pl-8">
-                      Assigned to: {state.friends.find(f => f.id === item.assignedTo)?.name}
+                      {isAssignedToCurrentFriend ? 
+                        `Sharing with: ${sharedWithNames}` : 
+                        `Assigned to: ${getSharedWithNames(item)}`
+                      }
+                    </div>
+                  )}
+                  {!isShared && item.assignedTo && !isAssignedToCurrentFriend && (
+                    <div className="text-xs text-gray-500 mt-1 pl-8">
+                      Assigned to: {state.friends.find(f => 
+                        f.id === (Array.isArray(item.assignedTo) ? item.assignedTo[0] : item.assignedTo)
+                      )?.name}
                     </div>
                   )}
                 </div>

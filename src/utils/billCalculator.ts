@@ -15,11 +15,23 @@ export const calculateFriendTotals = (
   
   // Calculate each friend's total
   return friends.map(friend => {
-    // Get all items assigned to this friend
-    const friendItems = items.filter(item => item.assignedTo === friend.id);
+    let itemsTotal = 0;
     
-    // Sum up the item prices
-    const itemsTotal = friendItems.reduce((sum, item) => sum + item.price, 0);
+    // Go through all items and calculate this friend's share
+    items.forEach(item => {
+      if (!item.assignedTo) return;
+      
+      const assignedTo = Array.isArray(item.assignedTo) 
+        ? item.assignedTo 
+        : [item.assignedTo];
+      
+      if (assignedTo.includes(friend.id)) {
+        // If shared, divide the price by the number of people sharing it
+        const sharers = assignedTo.length;
+        const sharedPrice = item.price / sharers;
+        itemsTotal += sharedPrice;
+      }
+    });
     
     // Total = items + share of tax + share of tip
     const total = itemsTotal + sharedTaxPerPerson + sharedTipPerPerson;

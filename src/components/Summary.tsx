@@ -2,10 +2,11 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Copy, CreditCard, Download, User, DollarSign, QrCode, Check } from 'lucide-react';
+import { Copy, CreditCard, Download, User, DollarSign, QrCode, Check, Users } from 'lucide-react';
 import { useBill } from '../context/BillContext';
 import { useToast } from '@/components/ui/use-toast';
 import { generateUpiLink } from '../utils/billCalculator';
+import { Badge } from '@/components/ui/badge';
 
 const Summary: React.FC = () => {
   const { state, dispatch } = useBill();
@@ -47,6 +48,38 @@ const Summary: React.FC = () => {
   const sharedTaxPerPerson = state.friends.length > 0 ? state.summary.tax / state.friends.length : 0;
   const sharedTipPerPerson = state.friends.length > 0 ? state.summary.tip / state.friends.length : 0;
   
+  const isItemShared = (itemId: string) => {
+    const item = state.items.find(i => i.id === itemId);
+    if (!item || !item.assignedTo) return false;
+    return Array.isArray(item.assignedTo) && item.assignedTo.length > 1;
+  };
+  
+  const getItemShareCount = (itemId: string) => {
+    const item = state.items.find(i => i.id === itemId);
+    if (!item || !item.assignedTo) return 0;
+    return Array.isArray(item.assignedTo) ? item.assignedTo.length : 1;
+  };
+  
+  const getSharerNames = (itemId: string, excludeFriendId: string) => {
+    const item = state.items.find(i => i.id === itemId);
+    if (!item || !item.assignedTo) return "";
+    
+    const assignedTo = Array.isArray(item.assignedTo) ? item.assignedTo : [item.assignedTo];
+    
+    return state.friends
+      .filter(f => assignedTo.includes(f.id) && f.id !== excludeFriendId)
+      .map(f => f.name)
+      .join(", ");
+  };
+  
+  const getItemPrice = (itemId: string, friendId: string) => {
+    const item = state.items.find(i => i.id === itemId);
+    if (!item) return 0;
+    
+    const shareCount = getItemShareCount(itemId);
+    return shareCount > 0 ? item.price / shareCount : 0;
+  };
+  
   return (
     <div className="splitty-container animate-fade-in">
       <Card className="w-full">
@@ -73,8 +106,13 @@ const Summary: React.FC = () => {
             
             {state.friends.map((friend) => {
               // Get items specifically for this friend
-              const friendItems = state.items.filter(item => item.assignedTo === friend.id);
-              const itemsTotal = friendItems.reduce((sum, item) => sum + item.price, 0);
+              const friendItems = state.items.filter(item => {
+                if (!item.assignedTo) return false;
+                if (Array.isArray(item.assignedTo)) {
+                  return item.assignedTo.includes(friend.id);
+                }
+                return item.assignedTo === friend.id;
+              });
               
               return (
                 <Card key={friend.id} className="shadow-sm overflow-hidden">
@@ -90,11 +128,40 @@ const Summary: React.FC = () => {
                   </div>
                   
                   <div className="p-4 space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Items Subtotal:</span>
-                      <span>${itemsTotal.toFixed(2)}</span>
+                    <div className="divide-y">
+                      {friendItems.map(item => (
+                        <div key={item.id} className="py-2 flex justify-between items-center">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span>{item.name}</span>
+                              {isItemShared(item.id) && (
+                                <Badge variant="outline" className="flex gap-1 items-center text-xs">
+                                  <Users className="h-3 w-3" />
+                                  Shared
+                                </Badge>
+                              )}
+                            </div>
+                            {isItemShared(item.id) && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                With: {getSharerNames(item.id, friend.id)}
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <div>
+                              ${getItemPrice(item.id, friend.id).toFixed(2)}
+                            </div>
+                            {isItemShared(item.id) && (
+                              <div className="text-xs text-gray-500">
+                                of ${item.price.toFixed(2)}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div className="flex justify-between">
+                    
+                    <div className="flex justify-between pt-2">
                       <span>Tax Share:</span>
                       <span>${sharedTaxPerPerson.toFixed(2)}</span>
                     </div>
