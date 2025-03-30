@@ -66,11 +66,11 @@ export const getAssignmentPercentage = (items: BillItem[]): number => {
 export const generatePaymentSummary = (friends: Friend[], summary: BillSummary): string => {
   if (friends.length === 0) return "No friends added to split bill with.";
   
-  let paymentText = `Total Bill: $${summary.total.toFixed(2)}\n`;
+  let paymentText = `Total Bill: ₹${summary.total.toFixed(2)}\n`;
   paymentText += `Split ${friends.length} ways\n\n`;
   
   friends.forEach(friend => {
-    paymentText += `${friend.name}: $${friend.total.toFixed(2)}\n`;
+    paymentText += `${friend.name}: ₹${friend.total.toFixed(2)}\n`;
   });
   
   return paymentText;
@@ -81,5 +81,5 @@ export const generateUpiLink = (name: string, amount: number): string => {
   // In a real implementation, this would generate a proper UPI link
   // For the MVP, we'll return a mock link
   const encodedName = encodeURIComponent(name);
-  return `upi://pay?pa=example@upi&pn=${encodedName}&am=${amount.toFixed(2)}&cu=USD&tn=BillSplit`;
+  return `upi://pay?pa=example@upi&pn=${encodedName}&am=${amount.toFixed(2)}&cu=INR&tn=BillSplit`;
 };

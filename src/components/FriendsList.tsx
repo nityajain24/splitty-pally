@@ -73,7 +73,7 @@ const FriendsList: React.FC = () => {
               value={newFriendName}
               onChange={(e) => setNewFriendName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddFriend()}
-              className="flex-1"
+              className="flex-1 text-foreground dark:text-foreground dark:bg-background"
             />
             <Button onClick={handleAddFriend} className="flex-none">
               <UserPlus className="h-4 w-4 mr-2" />
@@ -83,12 +83,12 @@ const FriendsList: React.FC = () => {
           
           {state.friends.length > 0 ? (
             <div className="mt-4">
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Friends ({state.friends.length})</h3>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Friends ({state.friends.length})</h3>
               <div className="space-y-2">
                 {state.friends.map((friend) => (
                   <div 
                     key={friend.id} 
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-md"
+                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-md"
                   >
                     <div className="flex items-center">
                       <User className="h-4 w-4 mr-2 text-splitty-gray" />
@@ -106,7 +106,7 @@ const FriendsList: React.FC = () => {
             </div>
           ) : (
             <div className="text-center py-6 text-gray-500">
-              <User className="h-10 w-10 mx-auto mb-2 text-gray-300" />
+              <User className="h-10 w-10 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
               <p>No friends added yet</p>
             </div>
           )}

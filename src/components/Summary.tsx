@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Copy, CreditCard, Download, User, DollarSign, QrCode, Check, Users } from 'lucide-react';
+import { Copy, CreditCard, Download, User, QrCode, Check, Users } from 'lucide-react';
 import { useBill } from '../context/BillContext';
 import { useToast } from '@/components/ui/use-toast';
 import { generateUpiLink } from '../utils/billCalculator';
@@ -14,7 +13,7 @@ const Summary: React.FC = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   
   const handleCopyPaymentDetails = (friendId: string, amount: number) => {
-    navigator.clipboard.writeText(`Amount to pay: $${amount.toFixed(2)}`);
+    navigator.clipboard.writeText(`Amount to pay: ₹${amount.toFixed(2)}`);
     
     setCopiedId(friendId);
     setTimeout(() => setCopiedId(null), 2000);
@@ -30,7 +29,7 @@ const Summary: React.FC = () => {
     // For the MVP, we'll show a toast
     toast({
       title: "QR Code Generated",
-      description: `Created payment QR code for ${name}: $${amount.toFixed(2)}`,
+      description: `Created payment QR code for ${name}: ₹${amount.toFixed(2)}`,
     });
     
     // Would normally generate an actual UPI link or payment link
@@ -44,7 +43,6 @@ const Summary: React.FC = () => {
     }
   };
   
-  // Calculate individual share of tax and tip
   const sharedTaxPerPerson = state.friends.length > 0 ? state.summary.tax / state.friends.length : 0;
   const sharedTipPerPerson = state.friends.length > 0 ? state.summary.tip / state.friends.length : 0;
   
@@ -96,16 +94,15 @@ const Summary: React.FC = () => {
           <div className="bg-primary/10 p-4 rounded-md flex justify-between items-center">
             <div>
               <h3 className="text-lg font-medium">Total Bill</h3>
-              <p className="text-sm text-gray-500">Split {state.friends.length} ways</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Split {state.friends.length} ways</p>
             </div>
-            <p className="text-2xl font-bold">${state.summary.total.toFixed(2)}</p>
+            <p className="text-2xl font-bold">₹{state.summary.total.toFixed(2)}</p>
           </div>
           
           <div className="space-y-4">
             <h3 className="text-md font-medium">Everyone Pays</h3>
             
             {state.friends.map((friend) => {
-              // Get items specifically for this friend
               const friendItems = state.items.filter(item => {
                 if (!item.assignedTo) return false;
                 if (Array.isArray(item.assignedTo)) {
@@ -116,13 +113,13 @@ const Summary: React.FC = () => {
               
               return (
                 <Card key={friend.id} className="shadow-sm overflow-hidden">
-                  <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
+                  <div className="p-4 border-b bg-gray-50 dark:bg-gray-800 flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-splitty-teal" />
                       <h4 className="font-medium">{friend.name}</h4>
                     </div>
                     <div className="flex items-center gap-1">
-                      <DollarSign className="h-4 w-4 text-splitty-teal" />
+                      <span className="text-splitty-teal">₹</span>
                       <span className="text-lg font-bold">{friend.total.toFixed(2)}</span>
                     </div>
                   </div>
@@ -142,18 +139,18 @@ const Summary: React.FC = () => {
                               )}
                             </div>
                             {isItemShared(item.id) && (
-                              <div className="text-xs text-gray-500 mt-1">
+                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                 With: {getSharerNames(item.id, friend.id)}
                               </div>
                             )}
                           </div>
                           <div className="text-right">
                             <div>
-                              ${getItemPrice(item.id, friend.id).toFixed(2)}
+                              ₹{getItemPrice(item.id, friend.id).toFixed(2)}
                             </div>
                             {isItemShared(item.id) && (
-                              <div className="text-xs text-gray-500">
-                                of ${item.price.toFixed(2)}
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                of ₹{item.price.toFixed(2)}
                               </div>
                             )}
                           </div>
@@ -163,17 +160,17 @@ const Summary: React.FC = () => {
                     
                     <div className="flex justify-between pt-2">
                       <span>Tax Share:</span>
-                      <span>${sharedTaxPerPerson.toFixed(2)}</span>
+                      <span>₹{sharedTaxPerPerson.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Tip Share:</span>
-                      <span>${sharedTipPerPerson.toFixed(2)}</span>
+                      <span>₹{sharedTipPerPerson.toFixed(2)}</span>
                     </div>
                     
                     <div className="pt-2 border-t mt-2">
                       <div className="flex justify-between font-medium">
                         <span>Total:</span>
-                        <span>${friend.total.toFixed(2)}</span>
+                        <span>₹{friend.total.toFixed(2)}</span>
                       </div>
                     </div>
                   </div>

@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check, DollarSign, ArrowLeft, ArrowRight, ListChecks, CircleCheck, Users } from 'lucide-react';
+import { Check, ArrowLeft, ArrowRight, ListChecks, CircleCheck, Users } from 'lucide-react';
 import { useBill } from '../context/BillContext';
 import { areAllItemsAssigned, getAssignmentPercentage, getUnassignedItemsTotal } from '../utils/billCalculator';
 import { useToast } from '@/components/ui/use-toast';
@@ -113,14 +113,14 @@ const ItemList: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="bg-blue-50 p-3 rounded-md flex justify-between items-center mb-4">
+          <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-md flex justify-between items-center mb-4">
             <div>
               <p className="text-sm font-medium">Remaining unassigned</p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 {state.items.filter(i => !i.assignedTo).length} items
               </p>
             </div>
-            <p className="text-lg font-bold">${unassignedTotal.toFixed(2)}</p>
+            <p className="text-lg font-bold">₹{unassignedTotal.toFixed(2)}</p>
           </div>
           
           <div className="space-y-2">
@@ -135,14 +135,14 @@ const ItemList: React.FC = () => {
                   key={item.id}
                   className={`bill-item cursor-pointer ${
                     isAssignedToCurrentFriend ? 'selected border-primary bg-primary/10' : 
-                    item.assignedTo ? 'border-gray-300' : ''
+                    item.assignedTo ? 'border-gray-300 dark:border-gray-700' : ''
                   }`}
                   onClick={() => handleToggleItem(item.id)}
                 >
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-3">
                       <div className={`rounded-full w-5 h-5 flex items-center justify-center ${
-                        isAssignedToCurrentFriend ? 'bg-primary text-white' : 'border border-gray-300'
+                        isAssignedToCurrentFriend ? 'bg-primary text-white' : 'border border-gray-300 dark:border-gray-600'
                       }`}>
                         {isAssignedToCurrentFriend && <Check className="h-3 w-3" />}
                       </div>
@@ -156,7 +156,7 @@ const ItemList: React.FC = () => {
                       )}
                     </div>
                     <div className="flex items-center gap-1">
-                      <DollarSign className="h-4 w-4 text-gray-400" />
+                      <span className="text-gray-400">₹</span>
                       <span className="font-medium">
                         {isShared ? 
                           `${(item.price / shareCount).toFixed(2)} of ${item.price.toFixed(2)}` : 
@@ -167,7 +167,7 @@ const ItemList: React.FC = () => {
                   </div>
                   
                   {isShared && (
-                    <div className="text-xs text-gray-500 mt-1 pl-8">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 pl-8">
                       {isAssignedToCurrentFriend ? 
                         `Sharing with: ${sharedWithNames}` : 
                         `Assigned to: ${getSharedWithNames(item)}`
@@ -175,7 +175,7 @@ const ItemList: React.FC = () => {
                     </div>
                   )}
                   {!isShared && item.assignedTo && !isAssignedToCurrentFriend && (
-                    <div className="text-xs text-gray-500 mt-1 pl-8">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 pl-8">
                       Assigned to: {state.friends.find(f => 
                         f.id === (Array.isArray(item.assignedTo) ? item.assignedTo[0] : item.assignedTo)
                       )?.name}
