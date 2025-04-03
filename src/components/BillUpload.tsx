@@ -18,6 +18,7 @@ const BillUpload: React.FC = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   
   const handleFileChange = (selectedFile: File) => {
+    console.log("File selected:", selectedFile.name, selectedFile.type, selectedFile.size);
     setFile(selectedFile);
     
     // Create preview for images
@@ -42,9 +43,20 @@ const BillUpload: React.FC = () => {
       return;
     }
     
+    // Check if file is an image
+    if (!file.type.includes('image')) {
+      toast({
+        title: "Unsupported file type",
+        description: "Please select an image file (JPG, PNG)",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsUploading(true);
     
     try {
+      console.log("Starting bill processing workflow");
       // Simulate upload
       await new Promise(resolve => setTimeout(resolve, 1000));
       setIsUploading(false);
@@ -56,7 +68,9 @@ const BillUpload: React.FC = () => {
       });
       
       // Process the bill with OCR
+      console.log("Calling processBillImage");
       const { items, summary } = await processBillImage(file);
+      console.log("Processing complete, got items:", items.length);
       
       // Update the bill state
       dispatch({ type: "SET_ITEMS", payload: items });
@@ -72,7 +86,7 @@ const BillUpload: React.FC = () => {
       console.error("Error processing bill:", error);
       toast({
         title: "Processing failed",
-        description: "There was an error processing your bill",
+        description: "There was an error processing your bill. Please try again.",
         variant: "destructive",
       });
       setIsUploading(false);
@@ -84,8 +98,12 @@ const BillUpload: React.FC = () => {
     setIsProcessing(true);
     
     try {
-      // Use the mock data directly
-      const { items, summary } = await processBillImage(new File([], "demo"));
+      console.log("Loading demo data");
+      // Create an empty file to trigger the demo data path
+      const demoFile = new File([], "demo.jpg", { type: "image/jpeg" });
+      
+      // Use the mock data
+      const { items, summary } = await processBillImage(demoFile);
       
       // Update the bill state
       dispatch({ type: "SET_ITEMS", payload: items });
