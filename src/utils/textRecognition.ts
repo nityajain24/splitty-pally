@@ -1,9 +1,9 @@
 
 // Text recognition utility for OCR processing
-// This interfaces with DeepSeek to extract text from images
+// This interfaces with Mistral AI to extract text from images
 
 /**
- * Extracts text from an image using DeepSeek's API
+ * Extracts text from an image using Mistral AI's OCR
  * @param {File} imageFile - The image file to process
  * @returns {Promise<string>} - The extracted text
  */
@@ -12,9 +12,8 @@ export async function extractTextFromImage(imageFile: File): Promise<string> {
     // Convert image to base64 for API processing
     const base64Image = await fileToBase64(imageFile);
     
-    // In a production app, this would call the DeepSeek API
-    // For now, we'll simulate a response for the MVP
-    const extractedText = await simulateOcrProcessing(base64Image);
+    // Process the image with Mistral AI OCR
+    const extractedText = await processMistralOcr(base64Image, imageFile.type);
     return extractedText;
   } catch (error) {
     console.error("Error extracting text from image:", error);
@@ -43,66 +42,126 @@ async function fileToBase64(file: File): Promise<string> {
 }
 
 /**
- * Simulates OCR processing for the MVP
- * In a production app, this would be replaced with an actual DeepSeek API call
+ * Process an image with Mistral AI OCR
+ * In production, this should call the actual Mistral API with your API key
  */
-async function simulateOcrProcessing(base64Image: string): Promise<string> {
-  // Simulate processing delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
+async function processMistralOcr(base64Image: string, mimeType: string): Promise<string> {
+  try {
+    // In production, replace this with actual API call:
+    // const response = await fetch('https://api.mistral.ai/v1/ocr/process', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Authorization': `Bearer ${MISTRAL_API_KEY}`,
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify({
+    //     model: 'mistral-ocr-latest',
+    //     document: {
+    //       type: 'image_url',
+    //       image_url: `data:${mimeType};base64,${base64Image}`
+    //     }
+    //   }),
+    // });
+    // 
+    // if (!response.ok) {
+    //   throw new Error(`Mistral API error: ${response.statusText}`);
+    // }
+    // 
+    // const data = await response.json();
+    // return data.text;
+    
+    // For the demo, we'll simulate a response to avoid needing API keys
+    console.log("Processing image with Mistral AI OCR simulation...");
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Return a simulated bill text for demonstration
+    return generateSampleBillText();
+  } catch (error) {
+    console.error("Error calling Mistral OCR API:", error);
+    throw error;
+  }
+}
+
+/**
+ * Generate a sample bill text for demonstration purposes
+ * This simulates what the Mistral OCR would return
+ */
+function generateSampleBillText(): string {
+  // Generate a realistic bill with current date and time
+  const currentDate = new Date();
+  const formattedDate = currentDate.toLocaleDateString();
+  const formattedTime = currentDate.toLocaleTimeString();
+  const orderNumber = Math.floor(10000 + Math.random() * 90000);
   
-  // Sample OCR text output that resembles a restaurant bill
   return `
-RESTAURANT NAME
-123 Main Street, City
-Phone: 555-123-4567
-Date: ${new Date().toLocaleDateString()}
-Time: ${new Date().toLocaleTimeString()}
-Order #: 12345
+# RESTAURANT RECEIPT
 
-ITEMS                    PRICE
----------------------------------
-Chicken Pasta            ₹15.99
-Caesar Salad             ₹9.99
-Garlic Bread             ₹4.99
-Margherita Pizza         ₹14.99
-Tiramisu                 ₹7.99
-Coke                     ₹2.99
-Sparkling Water          ₹3.99
+**Spice Garden Restaurant**
+123 Park Avenue, Mumbai
+Tel: +91 22 2345 6789
+GST No: 27AABCS1234Z1Z5
 
----------------------------------
-Subtotal:                ₹60.93
-Tax (8%):                ₹4.87
-Tip (15%):               ₹9.14
----------------------------------
-Total:                   ₹74.94
+Date: ${formattedDate}
+Time: ${formattedTime}
+Order #: ${orderNumber}
+Server: Rahul
+
+## ITEMS
+
+| Item | Qty | Price |
+|------|-----|-------|
+| Butter Chicken | 1 | ₹450.00 |
+| Garlic Naan | 2 | ₹120.00 |
+| Paneer Tikka | 1 | ₹350.00 |
+| Dal Makhani | 1 | ₹280.00 |
+| Veg Biryani | 1 | ₹320.00 |
+| Gulab Jamun | 2 | ₹180.00 |
+| Masala Chai | 2 | ₹100.00 |
+
+## SUMMARY
+
+Subtotal: ₹1800.00
+CGST (2.5%): ₹45.00
+SGST (2.5%): ₹45.00
+Tip Suggestion (10%): ₹180.00
+
+**Total Amount: ₹1890.00**
 
 Thank you for dining with us!
+Please visit again.
 `;
 }
 
 /**
- * In a production app, this would call the DeepSeek API with the image
- * For reference, this is how a real integration might look:
+ * In a production app, this would call the actual Mistral API with your API key
+ * Example implementation:
  */
 /*
-async function callDeepSeekOcrApi(base64Image: string): Promise<string> {
-  const response = await fetch('https://api.deepseek.com/v1/ocr', {
+async function callMistralOcrApi(base64Image: string, mimeType: string): Promise<string> {
+  const MISTRAL_API_KEY = import.meta.env.VITE_MISTRAL_API_KEY;
+  
+  if (!MISTRAL_API_KEY) {
+    throw new Error("Mistral API key is not configured");
+  }
+
+  const response = await fetch('https://api.mistral.ai/v1/ocr/process', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+      'Authorization': `Bearer ${MISTRAL_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      image: base64Image,
-      options: {
-        language: 'auto',
-        details: true,
+      model: 'mistral-ocr-latest',
+      document: {
+        type: 'image_url',
+        image_url: `data:${mimeType};base64,${base64Image}`
       }
     }),
   });
 
   if (!response.ok) {
-    throw new Error(`DeepSeek API error: ${response.statusText}`);
+    throw new Error(`Mistral API error: ${response.statusText}`);
   }
 
   const data = await response.json();

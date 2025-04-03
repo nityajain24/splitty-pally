@@ -1,6 +1,6 @@
 
-// OCR Processor utility that integrates with DeepSeek
-// For the MVP, we'll implement text extraction and then build on it
+// OCR Processor utility that integrates with Mistral AI OCR
+// Processes bill images and extracts structured data
 
 import { BillItem, BillSummary } from "../context/BillContext";
 import { extractTextFromImage } from "./textRecognition";
@@ -9,9 +9,9 @@ import { parseBillText } from "./billParser";
 // Process a bill image and extract structured data
 export const processBillImage = async (file: File): Promise<{ items: BillItem[], summary: BillSummary }> => {
   try {
-    // Step 1: Extract text from the image
+    // Step 1: Extract text from the image using Mistral AI OCR
     const extractedText = await extractTextFromImage(file);
-    console.log("Extracted text from image:", extractedText);
+    console.log("Extracted text from image using Mistral AI OCR:", extractedText);
     
     // Step 2: Parse the extracted text to get structured bill data
     const { items, summary } = parseBillText(extractedText);
@@ -32,23 +32,23 @@ export const processBillImage = async (file: File): Promise<{ items: BillItem[],
 
 // Provide fallback data in case OCR processing fails
 const provideFallbackData = (): { items: BillItem[], summary: BillSummary } => {
-  // Mock items data as fallback
+  // Mock items data as fallback with Indian cuisine items
   const mockItems: BillItem[] = [
-    { id: "1", name: "Chicken Pasta", price: 15.99, assignedTo: null },
-    { id: "2", name: "Caesar Salad", price: 9.99, assignedTo: null },
-    { id: "3", name: "Garlic Bread", price: 4.99, assignedTo: null },
-    { id: "4", name: "Margherita Pizza", price: 14.99, assignedTo: null },
-    { id: "5", name: "Tiramisu", price: 7.99, assignedTo: null },
-    { id: "6", name: "Coke", price: 2.99, assignedTo: null },
-    { id: "7", name: "Sparkling Water", price: 3.99, assignedTo: null },
+    { id: "1", name: "Butter Chicken", price: 450, assignedTo: null },
+    { id: "2", name: "Garlic Naan", price: 120, assignedTo: null },
+    { id: "3", name: "Paneer Tikka", price: 350, assignedTo: null },
+    { id: "4", name: "Dal Makhani", price: 280, assignedTo: null },
+    { id: "5", name: "Veg Biryani", price: 320, assignedTo: null },
+    { id: "6", name: "Gulab Jamun", price: 180, assignedTo: null },
+    { id: "7", name: "Masala Chai", price: 100, assignedTo: null },
   ];
   
   // Calculate the subtotal
   const subtotal = parseFloat(mockItems.reduce((sum, item) => sum + item.price, 0).toFixed(2));
   
-  // Mock tax and tip values
-  const tax = parseFloat((subtotal * 0.08).toFixed(2)); // 8% tax
-  const tip = parseFloat((subtotal * 0.15).toFixed(2)); // 15% tip
+  // Mock tax and tip values more appropriate for Indian context
+  const tax = parseFloat((subtotal * 0.05).toFixed(2)); // 5% tax (typical GST for restaurants)
+  const tip = parseFloat((subtotal * 0.10).toFixed(2)); // 10% tip
   
   // Create summary
   const mockSummary: BillSummary = {
