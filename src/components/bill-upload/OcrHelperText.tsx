@@ -10,7 +10,8 @@ const OcrHelperText: React.FC = () => {
         <p className="font-medium">About OCR Processing</p>
       </div>
       <p className="max-w-md mx-auto">
-        OCR (Optical Character Recognition) analyzes your bill image to extract items and prices automatically. For best results, use a clear, well-lit image.
+        OCR (Optical Character Recognition) analyzes your bill image to extract items and prices automatically. 
+        For best results, use a clear, well-lit image. Processing requires a Mistral AI API key.
       </p>
     </div>
   );

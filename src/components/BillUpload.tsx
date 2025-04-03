@@ -1,13 +1,15 @@
 
-import React, { useState } from 'react';
-import { Receipt } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Receipt, Settings } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useBill } from '../context/BillContext';
 import { processBillImage } from '../utils/ocrProcessor';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from "@/components/ui/button";
 import DropZone from './bill-upload/DropZone';
 import ActionButtons from './bill-upload/ActionButtons';
 import OcrHelperText from './bill-upload/OcrHelperText';
+import ApiKeySettings from './ApiKeySettings';
 
 const BillUpload: React.FC = () => {
   const { dispatch } = useBill();
@@ -16,6 +18,20 @@ const BillUpload: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [apiKeyDialogOpen, setApiKeyDialogOpen] = useState(false);
+  
+  // Check if API key exists on component mount
+  useEffect(() => {
+    const apiKey = localStorage.getItem('mistralApiKey');
+    if (!apiKey) {
+      // If no API key exists, remind user but don't force dialog open
+      toast({
+        title: "Mistral AI API Key Required",
+        description: "Please set your API key to use real OCR processing",
+        duration: 5000,
+      });
+    }
+  }, [toast]);
   
   const handleFileChange = (selectedFile: File) => {
     console.log("File selected:", selectedFile.name, selectedFile.type, selectedFile.size);
@@ -50,6 +66,18 @@ const BillUpload: React.FC = () => {
         description: "Please select an image file (JPG, PNG)",
         variant: "destructive",
       });
+      return;
+    }
+    
+    // Check if API key is set
+    const apiKey = localStorage.getItem('mistralApiKey');
+    if (!apiKey) {
+      toast({
+        title: "API Key Required",
+        description: "Please set your Mistral AI API key first",
+        variant: "destructive",
+      });
+      setApiKeyDialogOpen(true);
       return;
     }
     
@@ -130,10 +158,20 @@ const BillUpload: React.FC = () => {
     <div className="splitty-container animate-fade-in">
       <Card className="w-full">
         <CardHeader>
-          <CardTitle className="text-2xl flex items-center gap-2">
-            <Receipt className="h-6 w-6 text-splitty-teal" />
-            Upload Your Bill
-          </CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-2xl flex items-center gap-2">
+              <Receipt className="h-6 w-6 text-splitty-teal" />
+              Upload Your Bill
+            </CardTitle>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setApiKeyDialogOpen(true)} 
+              title="API Settings"
+            >
+              <Settings className="h-5 w-5" />
+            </Button>
+          </div>
           <CardDescription>
             Upload a picture of your bill to get started with splitting
           </CardDescription>
@@ -156,6 +194,11 @@ const BillUpload: React.FC = () => {
           <OcrHelperText />
         </CardContent>
       </Card>
+      
+      <ApiKeySettings 
+        open={apiKeyDialogOpen} 
+        onOpenChange={setApiKeyDialogOpen} 
+      />
     </div>
   );
 };
