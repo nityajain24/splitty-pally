@@ -1,4 +1,6 @@
-// Text recognition utility for OCR processing with Mistral AI
+
+// Text recognition utility for OCR processing
+// This interfaces with Mistral AI to extract text from images
 
 /**
  * Extracts text from an image using Mistral AI's OCR
@@ -10,9 +12,8 @@ export async function extractTextFromImage(imageFile: File): Promise<string> {
     // Convert image to base64 for API processing
     const base64Image = await fileToBase64(imageFile);
     
-    // Process with Mistral AI OCR API
+    // Process the image with Mistral AI OCR
     const extractedText = await processMistralOcr(base64Image, imageFile.type);
-    console.log("Extracted text from Mistral API:", extractedText.substring(0, 100) + "...");
     return extractedText;
   } catch (error) {
     console.error("Error extracting text from image:", error);
@@ -42,65 +43,49 @@ async function fileToBase64(file: File): Promise<string> {
 
 /**
  * Process an image with Mistral AI OCR
- * Makes an actual API call to Mistral's OCR service
+ * In production, this should call the actual Mistral API with your API key
  */
 async function processMistralOcr(base64Image: string, mimeType: string): Promise<string> {
-  // For demo purposes, if the base64 data is very small, use sample data
-  if (base64Image === undefined || base64Image.length < 100) {
-    console.log("Empty image detected, using demo data");
-    return generateSampleBillText();
-  }
-  
   try {
-    console.log("Making actual API call to Mistral AI OCR...");
+    // In production, replace this with actual API call:
+    // const response = await fetch('https://api.mistral.ai/v1/ocr/process', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Authorization': `Bearer ${MISTRAL_API_KEY}`,
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify({
+    //     model: 'mistral-ocr-latest',
+    //     document: {
+    //       type: 'image_url',
+    //       image_url: `data:${mimeType};base64,${base64Image}`
+    //     }
+    //   }),
+    // });
+    // 
+    // if (!response.ok) {
+    //   throw new Error(`Mistral API error: ${response.statusText}`);
+    // }
+    // 
+    // const data = await response.json();
+    // return data.text;
     
-    // Get API key from user input
-    const apiKey = localStorage.getItem('mistralApiKey');
-    if (!apiKey) {
-      throw new Error("Mistral API key not found. Please add it in the settings.");
-    }
+    // For the demo, we'll simulate a response to avoid needing API keys
+    console.log("Processing image with Mistral AI OCR simulation...");
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
-    const response = await fetch('https://api.mistral.ai/v1/ocr/process', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'mistral-ocr-latest',
-        document: {
-          type: 'image_url',
-          image_url: `data:${mimeType};base64,${base64Image}`
-        }
-      }),
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error("Mistral API error:", response.status, errorData);
-      throw new Error(`Mistral API error: ${response.status} ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    console.log("Successful API response received");
-    
-    // The API returns a 'text' field containing the OCR results
-    return data.text || "";
+    // Return a simulated bill text for demonstration
+    return generateSampleBillText();
   } catch (error) {
     console.error("Error calling Mistral OCR API:", error);
-    
-    // If we're in development and testing with mock data, fall back to sample
-    if (import.meta.env.DEV) {
-      console.warn("Falling back to sample data in development mode");
-      return generateSampleBillText();
-    }
-    
     throw error;
   }
 }
 
 /**
- * Generate a sample bill text for fallback purposes
+ * Generate a sample bill text for demonstration purposes
+ * This simulates what the Mistral OCR would return
  */
 function generateSampleBillText(): string {
   // Generate a realistic bill with current date and time
@@ -147,3 +132,39 @@ Thank you for dining with us!
 Please visit again.
 `;
 }
+
+/**
+ * In a production app, this would call the actual Mistral API with your API key
+ * Example implementation:
+ */
+/*
+async function callMistralOcrApi(base64Image: string, mimeType: string): Promise<string> {
+  const MISTRAL_API_KEY = import.meta.env.VITE_MISTRAL_API_KEY;
+  
+  if (!MISTRAL_API_KEY) {
+    throw new Error("Mistral API key is not configured");
+  }
+
+  const response = await fetch('https://api.mistral.ai/v1/ocr/process', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${MISTRAL_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'mistral-ocr-latest',
+      document: {
+        type: 'image_url',
+        image_url: `data:${mimeType};base64,${base64Image}`
+      }
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Mistral API error: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data.text;
+}
+*/

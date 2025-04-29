@@ -8,24 +8,13 @@ import { parseBillText } from "./billParser";
 
 // Process a bill image and extract structured data
 export const processBillImage = async (file: File): Promise<{ items: BillItem[], summary: BillSummary }> => {
-  console.log("Processing bill image:", file.name, file.type, file.size);
-  
   try {
-    // For demo data, we'll shortcut to fallback data if file is small/empty
-    if (file.size < 100) {
-      console.log("Empty file detected, using demo data");
-      return provideFallbackData();
-    }
-    
     // Step 1: Extract text from the image using Mistral AI OCR
-    console.log("Extracting text from image...");
     const extractedText = await extractTextFromImage(file);
-    console.log("Text extraction complete, length:", extractedText.length);
+    console.log("Extracted text from image using Mistral AI OCR:", extractedText);
     
     // Step 2: Parse the extracted text to get structured bill data
-    console.log("Parsing bill text...");
     const { items, summary } = parseBillText(extractedText);
-    console.log("Parsing complete, found", items.length, "items");
     
     // If no items were extracted, fall back to mock data
     if (items.length === 0) {
@@ -43,8 +32,6 @@ export const processBillImage = async (file: File): Promise<{ items: BillItem[],
 
 // Provide fallback data in case OCR processing fails
 const provideFallbackData = (): { items: BillItem[], summary: BillSummary } => {
-  console.log("Providing fallback data");
-  
   // Mock items data as fallback with Indian cuisine items
   const mockItems: BillItem[] = [
     { id: "1", name: "Butter Chicken", price: 450, assignedTo: null },

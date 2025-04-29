@@ -1,15 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
-import { Receipt, Settings } from 'lucide-react';
+import React, { useState } from 'react';
+import { Receipt } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useBill } from '../context/BillContext';
 import { processBillImage } from '../utils/ocrProcessor';
 import { useToast } from '@/hooks/use-toast';
-import { Button } from "@/components/ui/button";
 import DropZone from './bill-upload/DropZone';
 import ActionButtons from './bill-upload/ActionButtons';
 import OcrHelperText from './bill-upload/OcrHelperText';
-import ApiKeySettings from './ApiKeySettings';
 
 const BillUpload: React.FC = () => {
   const { dispatch } = useBill();
@@ -18,23 +16,8 @@ const BillUpload: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [apiKeyDialogOpen, setApiKeyDialogOpen] = useState(false);
-  
-  // Check if API key exists on component mount
-  useEffect(() => {
-    const apiKey = localStorage.getItem('mistralApiKey');
-    if (!apiKey) {
-      // If no API key exists, remind user but don't force dialog open
-      toast({
-        title: "Mistral AI API Key Required",
-        description: "Please set your API key to use real OCR processing",
-        duration: 5000,
-      });
-    }
-  }, [toast]);
   
   const handleFileChange = (selectedFile: File) => {
-    console.log("File selected:", selectedFile.name, selectedFile.type, selectedFile.size);
     setFile(selectedFile);
     
     // Create preview for images
@@ -59,32 +42,9 @@ const BillUpload: React.FC = () => {
       return;
     }
     
-    // Check if file is an image
-    if (!file.type.includes('image')) {
-      toast({
-        title: "Unsupported file type",
-        description: "Please select an image file (JPG, PNG)",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // Check if API key is set
-    const apiKey = localStorage.getItem('mistralApiKey');
-    if (!apiKey) {
-      toast({
-        title: "API Key Required",
-        description: "Please set your Mistral AI API key first",
-        variant: "destructive",
-      });
-      setApiKeyDialogOpen(true);
-      return;
-    }
-    
     setIsUploading(true);
     
     try {
-      console.log("Starting bill processing workflow");
       // Simulate upload
       await new Promise(resolve => setTimeout(resolve, 1000));
       setIsUploading(false);
@@ -96,9 +56,7 @@ const BillUpload: React.FC = () => {
       });
       
       // Process the bill with OCR
-      console.log("Calling processBillImage");
       const { items, summary } = await processBillImage(file);
-      console.log("Processing complete, got items:", items.length);
       
       // Update the bill state
       dispatch({ type: "SET_ITEMS", payload: items });
@@ -114,7 +72,7 @@ const BillUpload: React.FC = () => {
       console.error("Error processing bill:", error);
       toast({
         title: "Processing failed",
-        description: "There was an error processing your bill. Please try again.",
+        description: "There was an error processing your bill",
         variant: "destructive",
       });
       setIsUploading(false);
@@ -126,12 +84,8 @@ const BillUpload: React.FC = () => {
     setIsProcessing(true);
     
     try {
-      console.log("Loading demo data");
-      // Create an empty file to trigger the demo data path
-      const demoFile = new File([], "demo.jpg", { type: "image/jpeg" });
-      
-      // Use the mock data
-      const { items, summary } = await processBillImage(demoFile);
+      // Use the mock data directly
+      const { items, summary } = await processBillImage(new File([], "demo"));
       
       // Update the bill state
       dispatch({ type: "SET_ITEMS", payload: items });
@@ -158,20 +112,10 @@ const BillUpload: React.FC = () => {
     <div className="splitty-container animate-fade-in">
       <Card className="w-full">
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle className="text-2xl flex items-center gap-2">
-              <Receipt className="h-6 w-6 text-splitty-teal" />
-              Upload Your Bill
-            </CardTitle>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => setApiKeyDialogOpen(true)} 
-              title="API Settings"
-            >
-              <Settings className="h-5 w-5" />
-            </Button>
-          </div>
+          <CardTitle className="text-2xl flex items-center gap-2">
+            <Receipt className="h-6 w-6 text-splitty-teal" />
+            Upload Your Bill
+          </CardTitle>
           <CardDescription>
             Upload a picture of your bill to get started with splitting
           </CardDescription>
@@ -194,11 +138,6 @@ const BillUpload: React.FC = () => {
           <OcrHelperText />
         </CardContent>
       </Card>
-      
-      <ApiKeySettings 
-        open={apiKeyDialogOpen} 
-        onOpenChange={setApiKeyDialogOpen} 
-      />
     </div>
   );
 };
