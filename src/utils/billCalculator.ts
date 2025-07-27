@@ -50,7 +50,7 @@ export const areAllItemsAssigned = (items: BillItem[]): boolean => {
 
 // Calculate unassigned items total
 export const getUnassignedItemsTotal = (items: BillItem[]): number => {
-  const unassignedItems = items.filter(item => item.assignedTo === null);
+  const unassignedItems = items.filter(item => item.assignedTo.length === 0);
   return parseFloat(unassignedItems.reduce((sum, item) => sum + item.price, 0).toFixed(2));
 };
 
@@ -58,9 +58,23 @@ export const getUnassignedItemsTotal = (items: BillItem[]): number => {
 export const getAssignmentPercentage = (items: BillItem[]): number => {
   if (items.length === 0) return 0;
   
-  const assignedItems = items.filter(item => item.assignedTo !== null);
+  const assignedItems = items.filter(item => item.assignedTo.length > 0);
   return Math.round((assignedItems.length / items.length) * 100);
 };
+
+export function isItemAssignedToCurrentFriend(item: BillItem, currentFriendId: string): boolean {
+  return Array.isArray(item.assignedTo) && item.assignedTo.includes(currentFriendId);
+};
+
+export function getItemShareCount(item: BillItem): number {
+  if (!item.assignedTo) {
+      return 0;
+  }
+  if (Array.isArray(item.assignedTo)) {
+      return item.assignedTo.length;
+  }
+    return 1;
+}
 
 // Generate payment details with split amounts
 export const generatePaymentSummary = (friends: Friend[], summary: BillSummary): string => {

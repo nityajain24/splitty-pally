@@ -17,7 +17,7 @@ const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({ open, onOpenChange }) =
   
   // Load saved API key on component mount
   useEffect(() => {
-    const savedKey = localStorage.getItem('mistralApiKey');
+    const savedKey = 'NapDBMy7WBDVGjaUYgVGrGHnfj19oyu2';
     if (savedKey) {
       setApiKey(savedKey);
     }

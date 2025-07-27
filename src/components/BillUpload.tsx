@@ -101,7 +101,12 @@ const BillUpload: React.FC = () => {
       console.log("Processing complete, got items:", items.length);
       
       // Update the bill state
-      dispatch({ type: "SET_ITEMS", payload: items });
+      const processedItems = items.map(item => ({
+        ...item,
+        assignedTo: [], // new empty array per item, existing values are ignored
+      }));
+
+      dispatch({ type: "SET_ITEMS", payload: processedItems });
       dispatch({ type: "SET_SUMMARY", payload: summary });
       dispatch({ type: "SET_PROCESSED_BILL", payload: true });
       dispatch({ type: "SET_STEP", payload: 2 });
@@ -134,7 +139,12 @@ const BillUpload: React.FC = () => {
       const { items, summary } = await processBillImage(demoFile);
       
       // Update the bill state
-      dispatch({ type: "SET_ITEMS", payload: items });
+      const processedItems = items.map(item => ({
+        ...item,
+        assignedTo: [], // new empty array per item, existing values are ignored
+      }));
+
+      dispatch({ type: "SET_ITEMS", payload: processedItems });
       dispatch({ type: "SET_SUMMARY", payload: summary });
       dispatch({ type: "SET_PROCESSED_BILL", payload: true });
       dispatch({ type: "SET_STEP", payload: 2 });

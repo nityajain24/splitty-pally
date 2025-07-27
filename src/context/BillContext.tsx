@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useReducer, useEffect } from "react";
 
 export type BillItem = {
-  id: string;
-  name: string;
-  price: number;
-  assignedTo: string[] | null;
+    id: string;
+    name: string;
+    price: number;
+    assignedTo: string[];
 };
 
 export type Friend = {
@@ -62,7 +62,13 @@ const initialState: BillState = {
 function billReducer(state: BillState, action: BillAction): BillState {
   switch (action.type) {
     case "SET_ITEMS":
-      return { ...state, items: action.payload };
+      return {
+        ...state,
+        items: action.payload.map(item => ({
+          ...item,
+          assignedTo: Array.isArray(item.assignedTo) ? [...item.assignedTo] : [], // make sure it's a fresh array
+        })),
+      };
     
     case "SET_FRIENDS":
       return { ...state, friends: action.payload };
@@ -82,22 +88,14 @@ function billReducer(state: BillState, action: BillAction): BillState {
     case "REMOVE_FRIEND": {
       // Unassign items assigned to this friend
       const itemsToUpdate = state.items.map(item => {
-        if (item.assignedTo === null) return item;
-        
-        if (Array.isArray(item.assignedTo)) {
-          // If it's shared among multiple friends, just remove this friend from the array
+        if (item.assignedTo) {
+          const newAssignments = item.assignedTo.filter(id => id !== action.payload.id);
           return {
             ...item,
-            assignedTo: item.assignedTo.filter(id => id !== action.payload.id)
-          };
-        } else {
-          // For backward compatibility, convert string to array if needed
-          const currentAssignment = [item.assignedTo].filter(id => id !== action.payload.id);
-          return {
-            ...item,
-            assignedTo: currentAssignment.length > 0 ? currentAssignment : null
+            assignedTo: newAssignments
           };
         }
+        return item;
       });
       
       return {
@@ -110,36 +108,37 @@ function billReducer(state: BillState, action: BillAction): BillState {
     case "ASSIGN_ITEM": {
       const { itemId, friendId } = action.payload;
       
-      // Find the item to update
-      const item = state.items.find(item => item.id === itemId);
-      if (!item) return state;
-      
-      // Update the item assignment
+      // Create a deep copy of the items array to avoid reference issues
       const updatedItems = state.items.map(item => {
         if (item.id === itemId) {
-          // Initialize as array if currently null
-          const currentAssignments = item.assignedTo ? 
-            (Array.isArray(item.assignedTo) ? item.assignedTo : [item.assignedTo]) : 
-            [];
+          // Create a new array for assignedTo if it doesn't exist or isn't an array
+          const assignedTo = Array.isArray(item.assignedTo) ? [...item.assignedTo] : [];
           
-          // Add the friend if not already assigned
-          if (!currentAssignments.includes(friendId)) {
-            return {
-              ...item,
-              assignedTo: [...currentAssignments, friendId]
-            };
+          // Only add the friendId if it's not already in the array
+          if (!assignedTo.includes(friendId)) {
+            assignedTo.push(friendId);
           }
+          
+          // Return a new item object with the updated assignedTo array
+          return {
+            ...item,
+            assignedTo
+          };
         }
+        // Return unchanged items as is
         return item;
       });
       
-      // Update the friend's items list if not already in it
+      // Update the friend's items list as well
       const updatedFriends = state.friends.map(friend => {
-        if (friend.id === friendId && !friend.items.includes(itemId)) {
-          return {
-            ...friend,
-            items: [...friend.items, itemId],
-          };
+        if (friend.id === friendId) {
+          // Only add the itemId if it's not already in the friend's items array
+          if (!friend.items.includes(itemId)) {
+            return {
+              ...friend,
+              items: [...friend.items, itemId]
+            };
+          }
         }
         return friend;
       });
@@ -147,7 +146,7 @@ function billReducer(state: BillState, action: BillAction): BillState {
       return {
         ...state,
         items: updatedItems,
-        friends: updatedFriends,
+        friends: updatedFriends
       };
     }
     
@@ -156,16 +155,11 @@ function billReducer(state: BillState, action: BillAction): BillState {
       
       // Update the item assignment - remove this friend from the assignments
       const updatedItems = state.items.map(item => {
-        if (item.id === itemId && item.assignedTo) {
-          const currentAssignments = Array.isArray(item.assignedTo) 
-            ? item.assignedTo 
-            : [item.assignedTo];
-          
-          const newAssignments = currentAssignments.filter(id => id !== friendId);
-          
+        if (item.id === itemId && Array.isArray(item.assignedTo)) {
+          // Filter out the friendId from the assignedTo array
           return {
             ...item,
-            assignedTo: newAssignments.length > 0 ? newAssignments : null
+            assignedTo: item.assignedTo.filter(id => id !== friendId)
           };
         }
         return item;
@@ -193,18 +187,14 @@ function billReducer(state: BillState, action: BillAction): BillState {
       // Calculate the item subtotal for each friend, accounting for shared items
       const updatedFriends = state.friends.map(friend => {
         let total = 0;
-        
+
         // Go through all items and calculate this friend's share
         state.items.forEach(item => {
-          if (!item.assignedTo) return;
+          if (!Array.isArray(item.assignedTo)) return;
           
-          const assignedTo = Array.isArray(item.assignedTo) 
-            ? item.assignedTo 
-            : [item.assignedTo];
-          
-          if (assignedTo.includes(friend.id)) {
+          if (item.assignedTo.includes(friend.id)) {
             // If shared, divide the price by the number of people sharing it
-            const sharers = assignedTo.length;
+            const sharers = item.assignedTo.length;
             const sharedPrice = item.price / sharers;
             total += sharedPrice;
           }
@@ -281,7 +271,7 @@ export const BillProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Set individual pieces to avoid type issues
         dispatch({ type: "SET_ITEMS", payload: parsedState.items || [] });
         dispatch({ type: "SET_FRIENDS", payload: parsedState.friends || [] });
-        dispatch({ type: "SET_SUMMARY", payload: parsedState.summary || initialState.summary });
+        dispatch({ type: "SET_SUMMARY", payload: parsedState.summary || {} });
         dispatch({ type: "SET_PROCESSED_BILL", payload: parsedState.processedBill || false });
         dispatch({ type: "SET_STEP", payload: parsedState.currentStep || 1 });
       } catch (err) {

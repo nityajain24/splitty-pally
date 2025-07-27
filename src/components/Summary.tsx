@@ -46,16 +46,15 @@ const Summary: React.FC = () => {
   const sharedTaxPerPerson = state.friends.length > 0 ? state.summary.tax / state.friends.length : 0;
   const sharedTipPerPerson = state.friends.length > 0 ? state.summary.tip / state.friends.length : 0;
   
-  const isItemShared = (itemId: string) => {
-    const item = state.items.find(i => i.id === itemId);
+  const isItemShared = (item: { assignedTo: string[] | string | null }) => {
     if (!item || !item.assignedTo) return false;
-    return Array.isArray(item.assignedTo) && item.assignedTo.length > 1;
+    return Array.isArray(item.assignedTo) && item.assignedTo.length > 1;    
   };
   
-  const getItemShareCount = (itemId: string) => {
-    const item = state.items.find(i => i.id === itemId);
-    if (!item || !item.assignedTo) return 0;
+  const getItemShareCount = (item: { assignedTo: string[] | string | null }) => {
+    if (!item || !item.assignedTo) return 0;    
     return Array.isArray(item.assignedTo) ? item.assignedTo.length : 1;
+    
   };
   
   const getSharerNames = (itemId: string, excludeFriendId: string) => {
@@ -130,13 +129,14 @@ const Summary: React.FC = () => {
                         <div key={item.id} className="py-2 flex justify-between items-center">
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <span>{item.name}</span>
-                              {isItemShared(item.id) && (
+                            <span>{item.name}</span>
+                              {isItemShared(item) && (
                                 <Badge variant="outline" className="flex gap-1 items-center text-xs">
                                   <Users className="h-3 w-3" />
                                   Shared
                                 </Badge>
                               )}
+                              
                             </div>
                             {isItemShared(item.id) && (
                               <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -145,10 +145,10 @@ const Summary: React.FC = () => {
                             )}
                           </div>
                           <div className="text-right">
-                            <div>
-                              ₹{getItemPrice(item.id, friend.id).toFixed(2)}
+                          <div>
+                            ₹{(item.price / getItemShareCount(item)).toFixed(2)}
                             </div>
-                            {isItemShared(item.id) && (
+                            {isItemShared(item) && (
                               <div className="text-xs text-gray-500 dark:text-gray-400">
                                 of ₹{item.price.toFixed(2)}
                               </div>
